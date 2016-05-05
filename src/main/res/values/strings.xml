@@ -625,4 +625,12 @@
 	<string name="create_account">Create Account</string>
 	<string name="use_own_provider">Use my own provider</string>
 	<string name="pick_your_username">Pick your username</string>
+	<string name="account_settings_mobile_number">Mobile Number</string>
+	<string name="mobile_number">Mobile Number</string>
+	<string name="mobile_number_is_not_valid">Mobile Number is not Valid</string>
+	<string name="verification_code">Sent Sms Code</string>
+	<string name="resend_verification_code">Resend Sms Code</string>
+	<string name="verification_code_required">Sms Code is Not Valid</string>
+	<string name="app_shared_preferences_file">app_shared_preferences_file</string>
+	<string name="verification_code_is_not_valid">Sms Code is Not Valid</string>
 </resources>

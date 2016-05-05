@@ -649,7 +649,9 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 							activity.getString(R.string.check_x_filesize,
 									UIHelper.getFileDescriptionString(activity, message)));
 				}
-			} else {
+			} else if(message.isJsonInBody()){
+				renderJsonContent(viewHolder, message, darkBackground);
+			}else {
 				displayTextMessage(viewHolder, message, darkBackground);
 			}
 		}
@@ -672,6 +674,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 		displayStatus(viewHolder, message, type, darkBackground);
 
 		return view;
+	}
+
+	private void renderJsonContent(ViewHolder viewHolder, Message message, boolean darkBackground) {
+
 	}
 
 	public void openDownloadable(Message message) {

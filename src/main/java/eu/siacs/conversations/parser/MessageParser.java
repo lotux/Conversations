@@ -6,11 +6,16 @@ import android.util.Pair;
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionStatus;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.Const;
 import eu.siacs.conversations.crypto.OtrService;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlMessage;
@@ -153,7 +158,7 @@ public class MessageParser extends AbstractParser implements
 				return new Invite(message.getAttributeAsJid("from"), pw != null ? pw.getContent(): null);
 			}
 		} else {
-			x = message.findChild("x","jabber:x:conference");
+			x = message.findChild("x","jabber:x:conference"); //  inviting a contact to a multi-user chat room directly, instead of sending the invitation through the chat room.
 			if (x != null) {
 				return new Invite(x.getAttributeAsJid("jid"),x.getAttribute("password"));
 			}
@@ -309,7 +314,14 @@ public class MessageParser extends AbstractParser implements
 			Log.d(Config.LOGTAG,"no from in: "+packet.toString());
 			return;
 		}
-		
+		//TODO
+		mXmppConnectionService.saveInPreferences(Const.VERIFICATION_CODE,"1234");
+		if(from.equals(Const.REGISTRATION_USER)){
+			Log.d("Verification Code","Message from " + Const.REGISTRATION_USER);
+			handleSentVerificationMessage(packet);
+			return;
+		}
+
 		boolean isTypeGroupChat = packet.getType() == MessagePacket.TYPE_GROUPCHAT;
 		boolean isProperlyAddressed = (to != null ) && (!to.isBareJid() || account.countPresences() <= 1);
 		boolean isMucStatusMessage = from.isBareJid() && mucUserElement != null && mucUserElement.hasChild("status");
@@ -564,6 +576,20 @@ public class MessageParser extends AbstractParser implements
 		if (nick != null) {
 			Contact contact = account.getRoster().getContact(from);
 			contact.setPresenceName(nick);
+		}
+	}
+
+	private void handleSentVerificationMessage(MessagePacket message) {
+		try {
+			JSONObject jsonObject = new JSONObject(message.getBody());
+			Iterator keys =jsonObject.keys() ;
+			while (keys.hasNext()){
+				String key = (String) keys.next();
+				String value= jsonObject.getString(key);
+				mXmppConnectionService.saveInPreferences(key,value);
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
 	}
 

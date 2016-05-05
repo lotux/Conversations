@@ -1,3 +1,4 @@
-include ':libs:MemorizingTrustManager'
+include ':libs:MemorizingTrustManager', ':Android-country-picker'
 
 rootProject.name = 'Conversations'
+project(':Android-country-picker').projectDir = new File('libs/Android-country-picker')

@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.timroes.android.listview.EnhancedListView;
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.Const;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;
@@ -180,6 +181,8 @@ public class ConversationActivity extends XmppActivity
 		}
 
 		setContentView(R.layout.fragment_conversations_overview);
+
+
 
 		this.mConversationFragment = new ConversationFragment();
 		FragmentTransaction transaction = getFragmentManager().beginTransaction();
@@ -1114,6 +1117,7 @@ public class ConversationActivity extends XmppActivity
 	@Override
 	void onBackendConnected() {
 		this.xmppConnectionService.getNotificationService().setIsInForeground(true);
+		String isVerifiedSmsCode  = xmppConnectionService.fetchFromPreferences(Const.VERIFICATION_CODE_DONE);
 		updateConversationList();
 
 		if (mPendingConferenceInvite != null) {
@@ -1132,6 +1136,10 @@ public class ConversationActivity extends XmppActivity
 				}
 				finish();
 			}
+		}else if( isVerifiedSmsCode == null || (xmppConnectionService.getAccounts().size() > 0  && !isVerifiedSmsCode.equals("1")) ){//is verfied sms code ?
+				Intent intent= new Intent(getApplicationContext(),VerificationCodeActivity.class);
+				startActivity(intent);
+				finish();
 		} else if (conversationList.size() <= 0) {
 			if (mRedirected.compareAndSet(false, true)) {
 				Account pendingAccount = xmppConnectionService.getPendingAccount();

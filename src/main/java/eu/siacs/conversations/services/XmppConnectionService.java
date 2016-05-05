@@ -3318,4 +3318,17 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 			return XmppConnectionService.this;
 		}
 	}
+
+	public String fetchFromPreferences(String key){
+		SharedPreferences sharedPreferences = this.getSharedPreferences(getString(R.string.app_shared_preferences_file),this.MODE_PRIVATE);
+		return sharedPreferences.getString(key,null);
+	}
+
+	public void saveInPreferences(String key, String value){
+		SharedPreferences sharedPreferences = this.getSharedPreferences(getString(R.string.app_shared_preferences_file),this.MODE_PRIVATE);
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+		editor.putString(key,value);
+		editor.commit();
+	}
+
 }

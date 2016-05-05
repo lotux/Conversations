@@ -143,4 +143,5 @@ public final class Config {
 
 	private Config() {
 	}
+	public static final String DOMAIN_NAME="farsima.com";
 }

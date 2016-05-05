@@ -3,6 +3,9 @@ package eu.siacs.conversations.entities;
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -42,6 +45,7 @@ public class Message extends AbstractEntity {
 	public static final int TYPE_FILE = 2;
 	public static final int TYPE_STATUS = 3;
 	public static final int TYPE_PRIVATE = 4;
+	public static final int TYPE_JSON_IN_BODY=5;
 
 	public static final String CONVERSATION = "conversationUuid";
 	public static final String COUNTERPART = "counterpart";
@@ -84,7 +88,8 @@ public class Message extends AbstractEntity {
 	private Message mNextMessage = null;
 	private Message mPreviousMessage = null;
 	private String axolotlFingerprint = null;
-
+	private boolean jsonInBody;
+	private JSONObject json;
 	private Message() {
 
 	}
@@ -137,6 +142,17 @@ public class Message extends AbstractEntity {
 		this.read = read;
 		this.edited = edited;
 		this.oob = oob;
+		extractJsonFromMessageBody();
+	}
+
+	private void extractJsonFromMessageBody() {
+		try {
+			json = new JSONObject(body);
+			jsonInBody=true;
+		} catch (JSONException e) {
+			json =null;
+			jsonInBody=false;
+		}
 	}
 
 	public static Message fromCursor(Cursor cursor) {
@@ -564,6 +580,7 @@ public class Message extends AbstractEntity {
 		this.oob = isOob;
 	}
 
+
 	public enum Decision {
 		MUST,
 		SHOULD,
@@ -823,4 +840,20 @@ public class Message extends AbstractEntity {
 		}
 		return encryption;
 	}
+
+    public boolean isJsonInBody() {
+        return jsonInBody;
+    }
+
+    public void setJsonInBody(boolean jsonInBody) {
+        this.jsonInBody = jsonInBody;
+    }
+
+    public JSONObject getJson() {
+        return json;
+    }
+
+    public void setJson(JSONObject json) {
+        this.json = json;
+    }
 }

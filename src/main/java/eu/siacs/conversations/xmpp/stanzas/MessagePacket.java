@@ -12,6 +12,7 @@ public class MessagePacket extends AbstractAcknowledgeableStanza {
 	public static final int TYPE_ERROR = 4;
 	public static final int TYPE_HEADLINE = 5;
 
+
 	public MessagePacket() {
 		super("message");
 	}
