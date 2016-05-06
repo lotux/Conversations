@@ -67,7 +67,7 @@ import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
 public class ConversationActivity extends XmppActivity
-	implements OnAccountUpdate, OnConversationUpdate, OnRosterUpdate, OnUpdateBlocklist, XmppConnectionService.OnShowErrorToast {
+		implements OnAccountUpdate, OnConversationUpdate, OnRosterUpdate, OnUpdateBlocklist, XmppConnectionService.OnShowErrorToast {
 
 	public static final String ACTION_DOWNLOAD = "eu.siacs.conversations.action.DOWNLOAD";
 
@@ -181,7 +181,6 @@ public class ConversationActivity extends XmppActivity
 		}
 
 		setContentView(R.layout.fragment_conversations_overview);
-
 
 
 		this.mConversationFragment = new ConversationFragment();
@@ -757,11 +756,21 @@ public class ConversationActivity extends XmppActivity
 					case R.id.attach_location:
 						attachFile(ATTACHMENT_CHOICE_LOCATION);
 						break;
+					case R.id.content_builder:
+						showContentBuilder();
+						break;
 				}
 				return false;
 			}
 		});
 		attachFilePopup.show();
+	}
+
+	private void showContentBuilder() {
+		String TAG="contentBuilder";
+		Intent intent = new Intent(this,ContentBuilderActivity.class);
+		intent.putExtra("uuid",getSelectedConversation().getUuid());
+		startActivity(intent);
 	}
 
 	public void verifyOtrSessionDialog(final Conversation conversation, View view) {
@@ -1117,7 +1126,7 @@ public class ConversationActivity extends XmppActivity
 	@Override
 	void onBackendConnected() {
 		this.xmppConnectionService.getNotificationService().setIsInForeground(true);
-		String isVerifiedSmsCode  = xmppConnectionService.fetchFromPreferences(Const.VERIFICATION_CODE_DONE);
+		String isVerifiedSmsCode = xmppConnectionService.fetchFromPreferences(Const.VERIFICATION_CODE_DONE);
 		updateConversationList();
 
 		if (mPendingConferenceInvite != null) {
@@ -1136,10 +1145,10 @@ public class ConversationActivity extends XmppActivity
 				}
 				finish();
 			}
-		}else if( isVerifiedSmsCode == null || (xmppConnectionService.getAccounts().size() > 0  && !isVerifiedSmsCode.equals("1")) ){//is verfied sms code ?
-				Intent intent= new Intent(getApplicationContext(),VerificationCodeActivity.class);
-				startActivity(intent);
-				finish();
+		} else if (isVerifiedSmsCode == null || (xmppConnectionService.getAccounts().size() > 0 && !isVerifiedSmsCode.equals("1"))) {//is verfied sms code ?
+			Intent intent = new Intent(getApplicationContext(), VerificationCodeActivity.class);
+			startActivity(intent);
+			finish();
 		} else if (conversationList.size() <= 0) {
 			if (mRedirected.compareAndSet(false, true)) {
 				Account pendingAccount = xmppConnectionService.getPendingAccount();
@@ -1261,7 +1270,7 @@ public class ConversationActivity extends XmppActivity
 	}
 
 	@SuppressLint("NewApi")
-	private static List<Uri> extractUriFromIntent(final Intent intent) {
+	public static List<Uri> extractUriFromIntent(final Intent intent) {
 		List<Uri> uris = new ArrayList<>();
 		if (intent == null) {
 			return uris;
@@ -1416,7 +1425,7 @@ public class ConversationActivity extends XmppActivity
 	}
 
 	private boolean hasAccountWithoutPush() {
-		for(Account account : xmppConnectionService.getAccounts()) {
+		for (Account account : xmppConnectionService.getAccounts()) {
 			if (account.getStatus() != Account.State.DISABLED
 					&& !xmppConnectionService.getPushManagementService().available(account)) {
 				return true;
@@ -1429,7 +1438,7 @@ public class ConversationActivity extends XmppActivity
 		if (conversation == null) {
 			return;
 		}
-		xmppConnectionService.attachLocationToConversation(conversation,uri, new UiCallback<Message>() {
+		xmppConnectionService.attachLocationToConversation(conversation, uri, new UiCallback<Message>() {
 
 			@Override
 			public void success(Message message) {
@@ -1452,7 +1461,7 @@ public class ConversationActivity extends XmppActivity
 		if (conversation == null) {
 			return;
 		}
-		final Toast prepareFileToast = Toast.makeText(getApplicationContext(),getText(R.string.preparing_file), Toast.LENGTH_LONG);
+		final Toast prepareFileToast = Toast.makeText(getApplicationContext(), getText(R.string.preparing_file), Toast.LENGTH_LONG);
 		prepareFileToast.show();
 		xmppConnectionService.attachFileToConversation(conversation, uri, new UiCallback<Message>() {
 			@Override
@@ -1478,7 +1487,7 @@ public class ConversationActivity extends XmppActivity
 		if (conversation == null) {
 			return;
 		}
-		final Toast prepareFileToast = Toast.makeText(getApplicationContext(),getText(R.string.preparing_image), Toast.LENGTH_LONG);
+		final Toast prepareFileToast = Toast.makeText(getApplicationContext(), getText(R.string.preparing_image), Toast.LENGTH_LONG);
 		prepareFileToast.show();
 		xmppConnectionService.attachImageToConversation(conversation, uri,
 				new UiCallback<Message>() {
@@ -1516,7 +1525,7 @@ public class ConversationActivity extends XmppActivity
 
 	public void updateConversationList() {
 		xmppConnectionService
-			.populateWithOrderedConversations(conversationList);
+				.populateWithOrderedConversations(conversationList);
 		if (swipedConversation != null) {
 			if (swipedConversation.isRead()) {
 				conversationList.remove(swipedConversation);
@@ -1568,7 +1577,7 @@ public class ConversationActivity extends XmppActivity
 	}
 
 	public boolean useWhiteBackground() {
-		return getPreferences().getBoolean("use_white_background",false);
+		return getPreferences().getBoolean("use_white_background", false);
 	}
 
 	protected boolean trustKeysIfNeeded(int requestCode) {
@@ -1583,17 +1592,17 @@ public class ConversationActivity extends XmppActivity
 		boolean hasUndecidedContacts = !axolotlService.getKeysWithTrust(XmppAxolotlSession.Trust.UNDECIDED, targets).isEmpty();
 		boolean hasPendingKeys = !axolotlService.findDevicesWithoutSession(mSelectedConversation).isEmpty();
 		boolean hasNoTrustedKeys = axolotlService.anyTargetHasNoTrustedKeys(targets);
-		if(hasUndecidedOwn || hasUndecidedContacts || hasPendingKeys || hasNoTrustedKeys || hasUnaccepted) {
+		if (hasUndecidedOwn || hasUndecidedContacts || hasPendingKeys || hasNoTrustedKeys || hasUnaccepted) {
 			axolotlService.createSessionsIfNeeded(mSelectedConversation);
 			Intent intent = new Intent(getApplicationContext(), TrustKeysActivity.class);
 			String[] contacts = new String[targets.size()];
-			for(int i = 0; i < contacts.length; ++i) {
+			for (int i = 0; i < contacts.length; ++i) {
 				contacts[i] = targets.get(i).toString();
 			}
 			intent.putExtra("contacts", contacts);
 			intent.putExtra(EXTRA_ACCOUNT, mSelectedConversation.getAccount().getJid().toBareJid().toString());
 			intent.putExtra("choice", attachmentChoice);
-			intent.putExtra("conversation",mSelectedConversation.getUuid());
+			intent.putExtra("conversation", mSelectedConversation.getUuid());
 			startActivityForResult(intent, requestCode);
 			return true;
 		} else {
@@ -1606,13 +1615,13 @@ public class ConversationActivity extends XmppActivity
 		updateConversationList();
 		if (conversationList.size() > 0) {
 			if (!this.mConversationFragment.isAdded()) {
-				Log.d(Config.LOGTAG,"fragment NOT added to activity. detached="+Boolean.toString(mConversationFragment.isDetached()));
+				Log.d(Config.LOGTAG, "fragment NOT added to activity. detached=" + Boolean.toString(mConversationFragment.isDetached()));
 			}
 			ConversationActivity.this.mConversationFragment.updateMessages();
 			updateActionBarTitle();
 			invalidateOptionsMenu();
 		} else {
-			Log.d(Config.LOGTAG,"not updating conversations fragment because conversations list size was 0");
+			Log.d(Config.LOGTAG, "not updating conversations fragment because conversations list size was 0");
 		}
 	}
 
@@ -1641,7 +1650,7 @@ public class ConversationActivity extends XmppActivity
 	}
 
 	public boolean enterIsSend() {
-		return getPreferences().getBoolean("enter_is_send",false);
+		return getPreferences().getBoolean("enter_is_send", false);
 	}
 
 	@Override
@@ -1649,7 +1658,7 @@ public class ConversationActivity extends XmppActivity
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				Toast.makeText(ConversationActivity.this,resId,Toast.LENGTH_SHORT).show();
+				Toast.makeText(ConversationActivity.this, resId, Toast.LENGTH_SHORT).show();
 			}
 		});
 	}

@@ -169,13 +169,18 @@
         </activity>
         <activity android:name="com.soundcloud.android.crop.CropImageActivity"/>
         <activity android:name=".ui.VerificationCodeActivity" />
+        <activity android:name=".ui.ContentBuilderActivity"/>
         <service android:name=".services.ExportLogsService"/>
         <service android:name=".services.ContactChooserTargetService"
                  android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
             <intent-filter>
                 <action android:name="android.service.chooser.ChooserTargetService"/>
             </intent-filter>
-        </service>
+        </service><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
+     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>

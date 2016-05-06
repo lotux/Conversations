@@ -21,4 +21,8 @@
         android:id="@+id/attach_choose_file"
         android:title="@string/choose_file"/>
 
+    <item
+        android:id="@+id/content_builder"
+        android:title="@string/content_builder"/>
+
 </menu>

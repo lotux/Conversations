@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_add_image"
+        android:icon="?attr/icon_new_attachment"
+        android:orderInCategory="1"
+        android:showAsAction="always"
+        android:title="@string/add_image"/>
+    <item
+        android:id="@+id/action_publish_content"
+        android:icon="?attr/icon_done"
+        android:orderInCategory="2"
+        android:showAsAction="always"
+        android:title="@string/add_image"/>
+
+</menu>

@@ -94,6 +94,14 @@ public class Message extends AbstractEntity {
 
 	}
 
+	public Message(String messageUuid, String conversationUuid, String body, int type, String relativeFilePath){
+		this.uuid = messageUuid;
+		this.conversationUuid = conversationUuid;
+		this.body = body;
+		this.type = type;
+		this.relativeFilePath = relativeFilePath;
+	}
+
 	public Message(Conversation conversation, String body, int encryption) {
 		this(conversation, body, encryption, STATUS_UNSEND);
 	}

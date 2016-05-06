@@ -633,4 +633,6 @@
 	<string name="verification_code_required">Sms Code is Not Valid</string>
 	<string name="app_shared_preferences_file">app_shared_preferences_file</string>
 	<string name="verification_code_is_not_valid">Sms Code is Not Valid</string>
+	<string name="content_builder">Content Builder</string>
+	<string name="add_image">Add Image</string>
 </resources>
