@@ -1121,31 +1121,39 @@ public class ConversationActivity extends XmppActivity
 			if(contentsWrapper != null){ //means forwarded from content builder, so we should send a message from content
 				this.contents = contentsWrapper.getContents();
 				Log.d(Const.CONTENT_BUILDER,"Forwarded From ContentBuilder Activity Conents:"+ contents);
+				int numImagesContent=0;
 				for(Content content: this.contents){
-					if(content.getType() == Content.TYPE_IMAGE ){
-						Message message= generateImageMessageFromContent(content);
-						Log.d(Const.CONTENT_BUILDER,"Sending to upload, Generated Image Message: " + message);
-						xmppConnectionService.uploadFilesHttp(message, new UiCallback<Message>() {
-							@Override
-							public void success(Message object) {
-								Log.d(Const.CONTENT_BUILDER,"Upload was success, Returned message :" + object);
-								sendContentOnUploadFinished(object);
-								Log.d("Upload",object.toString());
-							}
-
-							@Override
-							public void error(int errorCode, Message object) {
-
-							}
-
-							@Override
-							public void userInputRequried(PendingIntent pi, Message object) {
-
-							}
-						});
-					}else if(content.getType() == Content.TYPE_TEXT){
-						sendContentOnUploadFinished(null);
+					if (content.getType() == Content.TYPE_IMAGE){
+						numImagesContent++;
 					}
+				}
+				if(numImagesContent > 0){
+					for(Content content: this.contents){
+						if(content.getType() == Content.TYPE_IMAGE ){
+							Message message= generateImageMessageFromContent(content);
+							Log.d(Const.CONTENT_BUILDER,"Sending to upload, Generated Image Message: " + message);
+							xmppConnectionService.uploadFilesHttp(message, new UiCallback<Message>() {
+								@Override
+								public void success(Message object) {
+									Log.d(Const.CONTENT_BUILDER,"Upload was success, Returned message :" + object);
+									sendContentOnUploadFinished(object);
+									Log.d("Upload",object.toString());
+								}
+
+								@Override
+								public void error(int errorCode, Message object) {
+
+								}
+
+								@Override
+								public void userInputRequried(PendingIntent pi, Message object) {
+
+								}
+							});
+						}
+					}
+				}else {
+					sendContentOnUploadFinished(null);
 				}
 			}
 		}
