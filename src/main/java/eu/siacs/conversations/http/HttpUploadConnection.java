@@ -144,12 +144,68 @@ public class HttpUploadConnection implements Transferable {
 		mXmppConnectionService.markMessage(message, Message.STATUS_UNSEND);
 	}
 
+	public void uploadAndUpdateUi(Message message, final UiCallback<Message> callback) {
+		this.message = message;
+		this.account = message.getConversation().getAccount();
+		this.file = mXmppConnectionService.getFileBackend().getFile(message, false);
+		this.mime = this.file.getMimeType();
+		if (Config.ENCRYPT_ON_HTTP_UPLOADED
+				|| message.getEncryption() == Message.ENCRYPTION_AXOLOTL
+				|| message.getEncryption() == Message.ENCRYPTION_OTR) {
+			this.key = new byte[48];
+			mXmppConnectionService.getRNG().nextBytes(this.key);
+			this.file.setKeyAndIv(this.key);
+		}
+		Pair<InputStream,Integer> pair;
+		try {
+			pair = AbstractConnectionManager.createInputStream(file, true);
+		} catch (FileNotFoundException e) {
+			fail();
+			return;
+		}
+		this.file.setExpectedSize(pair.second);
+		this.mFileInputStream = pair.first;
+		Jid host = account.getXmppConnection().findDiscoItemByFeature(Xmlns.HTTP_UPLOAD);
+		IqPacket request = mXmppConnectionService.getIqGenerator().requestHttpUploadSlot(host,file,mime);
+		mXmppConnectionService.sendIqPacket(account, request, new OnIqPacketReceived() {
+			@Override
+			public void onIqPacketReceived(Account account, IqPacket packet) {
+				if (packet.getType() == IqPacket.TYPE.RESULT) {
+					Element slot = packet.findChild("slot",Xmlns.HTTP_UPLOAD);
+					if (slot != null) {
+						try {
+							mGetUrl = new URL(slot.findChildContent("get"));
+							mPutUrl = new URL(slot.findChildContent("put"));
+							if (!canceled) {
+								new Thread(new FileUploader(callback)).start();
+							}
+						} catch (MalformedURLException e) {
+							fail();
+						}
+					} else {
+						fail();
+					}
+				} else {
+					fail();
+				}
+			}
+		});
+
+	}
+
 	private class FileUploader implements Runnable {
+		UiCallback<Message> callback;
+		public FileUploader(UiCallback<Message> uiCallback){
+			this.callback  = uiCallback;
+		}
+		public FileUploader(){
+		}
 
 		@Override
 		public void run() {
 			this.upload();
 		}
+
 
 		private void upload() {
 			OutputStream os = null;
@@ -212,7 +268,11 @@ public class HttpUploadConnection implements Transferable {
 							}
 						});
 					} else {
-						mXmppConnectionService.resendMessage(message, delayed);
+						if(callback != null){
+							callback.success(message);
+						}else {
+							mXmppConnectionService.resendMessage(message, delayed);
+						}
 					}
 				} else {
 					fail();

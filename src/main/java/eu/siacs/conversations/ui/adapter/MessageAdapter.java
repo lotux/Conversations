@@ -1,11 +1,13 @@
 package eu.siacs.conversations.ui.adapter;
 
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -19,6 +21,7 @@ import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -31,8 +34,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Type;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Matcher;
@@ -41,12 +50,15 @@ import java.util.regex.Pattern;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;
 import eu.siacs.conversations.entities.Account;
+import eu.siacs.conversations.entities.Content;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.DownloadableFile;
+import eu.siacs.conversations.entities.JsonContent;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.Message.FileParams;
 import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.ui.ConversationActivity;
+import eu.siacs.conversations.ui.UiCallback;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.GeoHelper;
 import eu.siacs.conversations.utils.UIHelper;
@@ -297,6 +309,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 			viewHolder.download_button.setVisibility(View.GONE);
 		}
 		viewHolder.image.setVisibility(View.GONE);
+		viewHolder.json_message_container.setVisibility(View.GONE);
 		viewHolder.messageBody.setVisibility(View.VISIBLE);
 		viewHolder.messageBody.setIncludeFontPadding(true);
 		if (message.getBody() != null) {
@@ -423,6 +436,7 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 			viewHolder.download_button.setVisibility(View.GONE);
 		}
 		viewHolder.messageBody.setVisibility(View.GONE);
+		viewHolder.json_message_container.setVisibility(View.GONE);
 		viewHolder.image.setVisibility(View.VISIBLE);
 		FileParams params = message.getFileParams();
 		double target = metrics.density * 288;
@@ -493,6 +507,10 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 						.findViewById(R.id.message_time);
 					viewHolder.indicatorReceived = (ImageView) view
 						.findViewById(R.id.indicator_received);
+					viewHolder.json_message_container = (LinearLayout) view
+							.findViewById(R.id.json_message_container);
+					viewHolder.json_message_text = (TextView) view
+							.findViewById(R.id.json_message_text);
 					break;
 				case RECEIVED:
 					view = activity.getLayoutInflater().inflate(
@@ -515,6 +533,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 					viewHolder.indicatorReceived = (ImageView) view
 						.findViewById(R.id.indicator_received);
 					viewHolder.encryption = (TextView) view.findViewById(R.id.message_encryption);
+					viewHolder.json_message_container = (LinearLayout) view
+							.findViewById(R.id.json_message_container);
 					break;
 				case STATUS:
 					view = activity.getLayoutInflater().inflate(R.layout.message_status, parent, false);
@@ -677,6 +697,83 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 	}
 
 	private void renderJsonContent(ViewHolder viewHolder, Message message, boolean darkBackground) {
+		if (viewHolder.download_button != null) {
+			viewHolder.download_button.setVisibility(View.GONE);
+		}
+		viewHolder.messageBody.setVisibility(View.GONE);
+		viewHolder.image.setVisibility(View.GONE);
+		viewHolder.edit_indicator.setVisibility(View.GONE);
+		viewHolder.json_message_container.setVisibility(View.VISIBLE);
+		//viewHolder.json_message_text.setText(message.getBody());
+
+		List<Content> contents=null;
+		JsonContent  jsonContent =null;
+		Gson gson = new Gson();
+		try {
+			jsonContent = gson.fromJson(message.getBody(),JsonContent.class);
+		}catch (Exception e){
+
+		}
+		if(jsonContent!= null){
+			Type type = new TypeToken<ArrayList<Content>>(){}.getType();
+			try {
+				contents  = gson.fromJson(jsonContent.getContent(), type);
+			}catch (Exception e){
+
+			}
+
+			if(contents != null){
+				LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+				viewHolder.json_message_container.removeAllViews();
+				for (Content content: contents){
+					if(content.getType() == Content.TYPE_IMAGE){
+						ImageView imageView = new ImageView(MessageAdapter.this.getContext());
+						imageView.setLayoutParams(params);
+						handleImageContent(imageView,content, message);
+						//imageView.setImageURI(activity.xmppConnectionService.getFileBackend().getThumbnail(content,size));
+						viewHolder.json_message_container.addView(imageView);
+					}else if(content.getType() ==Content.TYPE_TEXT){
+						TextView textView = new TextView(MessageAdapter.this.getContext());
+						textView.setLayoutParams(params);
+						textView.setText(content.getBody());
+						viewHolder.json_message_container.addView(textView);
+					}
+				}
+			}
+		}
+	}
+
+	private void
+    handleImageContent(final ImageView imageView, final Content content, final Message parentMessage) {
+		final Message message = new Message(content.getUuid(),parentMessage.getConversation(),content.getBody(),Message.TYPE_IMAGE,content.getRelativeFilePath());
+        DownloadableFile file = activity.xmppConnectionService.getFileBackend().getFile(message);
+
+        if(file.exists()){
+            activity.loadBitmap(message,imageView);
+        }else {
+            Log.d("handle Image Content",String.format("File %s doesn't exit, downloading...",file.getPath()));
+			activity.xmppConnectionService.getHttpConnectionManager().downloadImageContent(activity.getSelectedConversation(),content, new UiCallback<Message>() {
+				@Override
+				public void success(Message msg) {
+					content.setRelativeFilePath
+							(message.getRelativeFilePath());
+					Log.d("Image Relative Path:",content.getRelativeFilePath());
+					activity.xmppConnectionService.updateContent(content, parentMessage);
+					Bitmap bitmap = BitmapFactory.decodeFile(content.getRelativeFilePath());
+					imageView.setImageBitmap(bitmap);
+				}
+
+				@Override
+				public void error(int errorCode, Message object) {
+					Log.e("Download Image Content","Error Code: " + errorCode);
+				}
+
+				@Override
+				public void userInputRequried(PendingIntent pi, Message object) {
+
+				}
+			});
+        }
 
 	}
 
@@ -743,6 +840,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 		protected TextView encryption;
 		public Button load_more_messages;
 		public ImageView edit_indicator;
+		public LinearLayout json_message_container;
+		public TextView json_message_text;
 	}
 
 	class BitmapWorkerTask extends AsyncTask<Message, Void, Bitmap> {

@@ -31,6 +31,9 @@ import android.util.Log;
 import android.util.LruCache;
 import android.util.Pair;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import net.java.otr4j.OtrException;
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
@@ -41,7 +44,9 @@ import org.openintents.openpgp.IOpenPgpService2;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpServiceConnection;
 
+import java.lang.reflect.Type;
 import java.math.BigInteger;
+import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -68,7 +73,9 @@ import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Blockable;
 import eu.siacs.conversations.entities.Bookmark;
 import eu.siacs.conversations.entities.Contact;
+import eu.siacs.conversations.entities.Content;
 import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.entities.JsonContent;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.MucOptions.OnRenameListener;
@@ -872,6 +879,12 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 
 	public void sendMessage(final Message message) {
 		sendMessage(message, false, false);
+	}
+
+	public void uploadFilesHttp(Message message,UiCallback<Message> callback){
+		boolean delay=false;
+		mHttpConnectionManager.uploadAndGetUrl(message,callback);
+		Log.d("m",message.toString());
 	}
 
 	private void sendMessage(final Message message, final boolean resend, final boolean delay) {
@@ -2235,6 +2248,25 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 	public void updateMessage(Message message) {
 		databaseBackend.updateMessage(message);
 		updateConversationUi();
+	}
+
+	public void updateContent(Content content, Message parentMessage){
+		Gson gson = new Gson();
+		JsonContent jsonContent = gson.fromJson(parentMessage.getBody(),JsonContent.class);
+		if(jsonContent!= null && jsonContent.getContent() != null){
+			Type type = new TypeToken<ArrayList<Content>>(){}.getType();
+			List<Content> contents = gson.fromJson(jsonContent.getContent(),type);
+			for (int i=0;i<contents.size();i++){
+				if(contents.get(i).getUuid().equals(content.getUuid())){
+					contents.get(i).setRelativeFilePath(content.getRelativeFilePath());
+				}
+			}
+
+			jsonContent.setContent(gson.toJson(contents));
+			parentMessage.setBody(gson.toJson(jsonContent));
+			updateMessage(parentMessage);
+		}
+
 	}
 
 	public void updateMessage(Message message, String uuid) {

@@ -4,6 +4,7 @@ import android.util.LruCache;
 
 import net.java.otr4j.session.SessionID;
 
+import java.io.Serializable;
 import java.net.IDN;
 
 import eu.siacs.conversations.Config;
@@ -13,7 +14,7 @@ import gnu.inet.encoding.StringprepException;
 /**
  * The `Jid' class provides an immutable representation of a JID.
  */
-public final class Jid {
+public final class Jid implements Serializable {
 
 	private static LruCache<String,Jid> cache = new LruCache<>(1024);
 

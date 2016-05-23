@@ -1,20 +1,13 @@
 package eu.siacs.conversations.ui;
 
-import android.annotation.SuppressLint;
 import android.app.ActionBar;
-import android.app.FragmentManager;
-import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -24,7 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import eu.siacs.conversations.R;
-import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.entities.Content;
+import eu.siacs.conversations.entities.ContentsWrapper;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.ui.adapter.ContentAdapter;
 
@@ -36,9 +30,9 @@ public class ContentBuilderActivity extends XmppActivity {
 
     EditMessage editMessage;
     ImageButton textSendButton;
-    ListView messagesView;
-    List<Message> messageList = new ArrayList<>();
-    ArrayAdapter<Message>  messageArrayAdapter;
+    ListView contentView;
+    List<Content> contentList = new ArrayList<>();
+    ArrayAdapter<Content> contentArrayAdapter;
     String conversationUuid;
     public static final String ACTION_VIEW = "actionView";
 
@@ -51,9 +45,9 @@ public class ContentBuilderActivity extends XmppActivity {
 
         textSendButton = (ImageButton) findViewById(R.id.textSendButton);
         textSendButton.setOnClickListener(new OnClickTextSendButton());
-        messagesView = (ListView) findViewById(R.id.messages_view);
-        messageArrayAdapter = new ContentAdapter(this,messageList);
-        messagesView.setAdapter(messageArrayAdapter);
+        contentView = (ListView) findViewById(R.id.messages_view);
+        contentArrayAdapter = new ContentAdapter(this, contentList);
+        contentView.setAdapter(contentArrayAdapter);
         editMessage = (EditMessage) findViewById(R.id.message_body);
         Intent intent = getIntent();
         conversationUuid = intent.getExtras().getString("uuid");
@@ -82,8 +76,20 @@ public class ContentBuilderActivity extends XmppActivity {
             case R.id.action_add_image:
                 displayAddImage();
                 break;
+            case R.id.action_publish_content:
+                publishContent();
+                break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void publishContent() {
+        Intent intent = new Intent(this,ConversationActivity.class);
+        intent.putExtra(ConversationActivity.STATE_OPEN_CONVERSATION,conversationUuid);
+        intent.putExtra(ConversationActivity.STATE_PANEL_OPEN,true);
+        ContentsWrapper contentsWrapper = new ContentsWrapper(contentList);
+        intent.putExtra(ConversationActivity.CONTENTS,contentsWrapper);
+        startActivity(intent);
     }
 
     private void displayAddImage() {
@@ -108,9 +114,9 @@ public class ContentBuilderActivity extends XmppActivity {
     private class OnClickTextSendButton implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            Message message = new Message(java.util.UUID.randomUUID().toString(),conversationUuid,editMessage.getText().toString(),Message.TYPE_TEXT,null);
-            messageList.add(message);
-            messageArrayAdapter.notifyDataSetChanged();
+            Content content = new Content(java.util.UUID.randomUUID().toString(),editMessage.getText().toString(),Content.TYPE_TEXT,null);
+            contentList.add(content);
+            contentArrayAdapter.notifyDataSetChanged();
             editMessage.setText("");
         }
     }
@@ -131,9 +137,9 @@ public class ContentBuilderActivity extends XmppActivity {
     }
 
     private void attachImageToContent(Uri uri) {
-        Message message = new Message(java.util.UUID.randomUUID().toString(),conversationUuid,"",Message.TYPE_IMAGE,uri.toString());
-        messageList.add(message);
-        messageArrayAdapter.notifyDataSetChanged();
+        Content content= new Content(java.util.UUID.randomUUID().toString(),"",Content.TYPE_IMAGE, xmppConnectionService.getFileBackend().getOriginalPath(uri));
+        contentList.add(content);
+        contentArrayAdapter.notifyDataSetChanged();
     }
 
 

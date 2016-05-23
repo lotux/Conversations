@@ -34,6 +34,8 @@ import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import net.java.otr4j.session.SessionStatus;
 
 import org.openintents.openpgp.util.OpenPgpApi;
@@ -52,7 +54,10 @@ import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Blockable;
 import eu.siacs.conversations.entities.Contact;
+import eu.siacs.conversations.entities.Content;
+import eu.siacs.conversations.entities.ContentsWrapper;
 import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.entities.JsonContent;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.persistance.FileBackend;
@@ -90,9 +95,10 @@ public class ConversationActivity extends XmppActivity
 	public static final int ATTACHMENT_CHOICE_RECORD_VOICE = 0x0304;
 	public static final int ATTACHMENT_CHOICE_LOCATION = 0x0305;
 	public static final int ATTACHMENT_CHOICE_INVALID = 0x0306;
-	private static final String STATE_OPEN_CONVERSATION = "state_open_conversation";
-	private static final String STATE_PANEL_OPEN = "state_panel_open";
+	public static final String STATE_OPEN_CONVERSATION = "state_open_conversation";
+	public static final String STATE_PANEL_OPEN = "state_panel_open";
 	private static final String STATE_PENDING_URI = "state_pending_uri";
+	public static final String CONTENTS = "contents";
 
 	private String mOpenConverstaion = null;
 	private boolean mPanelOpen = true;
@@ -117,7 +123,8 @@ public class ConversationActivity extends XmppActivity
 	private boolean mActivityPaused = false;
 	private AtomicBoolean mRedirected = new AtomicBoolean(false);
 	private Pair<Integer, Intent> mPostponedActivityResult;
-
+	private List<Content> contents = new ArrayList<>();
+	private List<Content> uploadedContents= new ArrayList<>();
 	public Conversation getSelectedConversation() {
 		return this.mSelectedConversation;
 	}
@@ -177,6 +184,16 @@ public class ConversationActivity extends XmppActivity
 			if (pending != null) {
 				mPendingImageUris.clear();
 				mPendingImageUris.add(Uri.parse(pending));
+			}
+		}else{
+			Intent intent = getIntent();
+			if(intent.getExtras() != null){
+				mOpenConverstaion = intent.getExtras().getString(STATE_OPEN_CONVERSATION, null);
+				mPanelOpen = intent.getExtras().getBoolean(STATE_PANEL_OPEN, true);
+				ContentsWrapper contentsWrapper = (ContentsWrapper) intent.getExtras().getSerializable(CONTENTS);
+				if(contentsWrapper != null){
+					this.contents = contentsWrapper.getContents();
+				}
 			}
 		}
 
@@ -767,6 +784,8 @@ public class ConversationActivity extends XmppActivity
 	}
 
 	private void showContentBuilder() {
+		uploadedContents.clear();
+		contents.clear();
 		String TAG="contentBuilder";
 		Intent intent = new Intent(this,ContentBuilderActivity.class);
 		intent.putExtra("uuid",getSelectedConversation().getUuid());
@@ -1097,6 +1116,97 @@ public class ConversationActivity extends XmppActivity
 			sendReadMarkerIfNecessary(getSelectedConversation());
 		}
 
+		if(getIntent().getExtras() != null){
+			ContentsWrapper contentsWrapper = (ContentsWrapper) getIntent().getExtras().getSerializable(CONTENTS);
+			if(contentsWrapper != null){ //means forwarded from content builder, so we should send a message from content
+				this.contents = contentsWrapper.getContents();
+				Log.d(Const.CONTENT_BUILDER,"Forwarded From ContentBuilder Activity Conents:"+ contents);
+				for(Content content: this.contents){
+					if(content.getType() == Content.TYPE_IMAGE ){
+						Message message= generateImageMessageFromContent(content);
+						Log.d(Const.CONTENT_BUILDER,"Sending to upload, Generated Image Message: " + message);
+						xmppConnectionService.uploadFilesHttp(message, new UiCallback<Message>() {
+							@Override
+							public void success(Message object) {
+								Log.d(Const.CONTENT_BUILDER,"Upload was success, Returned message :" + object);
+								sendContentOnUploadFinished(object);
+								Log.d("Upload",object.toString());
+							}
+
+							@Override
+							public void error(int errorCode, Message object) {
+
+							}
+
+							@Override
+							public void userInputRequried(PendingIntent pi, Message object) {
+
+							}
+						});
+					}else if(content.getType() == Content.TYPE_TEXT){
+						sendContentOnUploadFinished(null);
+					}
+				}
+			}
+		}
+
+	}
+
+	private void sendContentOnUploadFinished(Message uploadedImageMessage) {
+		Log.d(Const.CONTENT_BUILDER,"Check if all images are uploaded, then create json message from content and send to user");
+		if(uploadedImageMessage != null){
+			updateContent(generateImageContentFromMessage(uploadedImageMessage));
+		}
+
+		for(Content content: this.contents){
+			if(content.getType() == Content.TYPE_IMAGE && content.getImageHttpURL() == null){
+				Log.d(Const.CONTENT_BUILDER,"All images didn't upload to server, skip sending message!");
+				return;
+			}
+		}
+
+		Message message = generateMessageFromContents();
+		xmppConnectionService.sendMessage(message);
+	}
+
+	private void updateContent(Content inputContent) {
+		Log.d(Const.CONTENT_BUILDER,"Replacing input content with content in main list");
+		int index = 0;
+		for(Content content : this.contents ){
+			if(content.getUuid().equals(inputContent.getUuid())){
+				content.setImageHttpURL(inputContent.getImageHttpURL());
+				content.setImageHeight(inputContent.getImageHeight());
+				content.setImageWidth(inputContent.getImageWidth());
+				content.setImageSize(inputContent.getImageSize());
+				this.contents.set(index,content);
+				return;
+			}
+			index++;
+		}
+	}
+
+	private Message generateMessageFromContents() {
+		Gson gson = new Gson();
+		String body=gson.toJson(this.contents);
+		JsonContent jsonContent = new JsonContent(JsonContent.MESSAGE,body);
+		Message message = new Message(getSelectedConversation(),gson.toJson(jsonContent),0);
+		return message;
+	}
+
+	private Message generateImageMessageFromContent(Content content) {
+		Message message = new Message(content.getUuid()
+				,getSelectedConversation()
+				,""
+				,Message.TYPE_IMAGE
+				,content.getRelativeFilePath()
+		);
+		return message;
+	}
+
+	private Content generateImageContentFromMessage(Message message){
+		String[] values  =  message.getBody().split("\\|");
+		Content content = new Content(message.getUuid(),values[0],Integer.parseInt(values[1]),Integer.parseInt(values[2]),Integer.parseInt(values[3]));
+		return  content;
 	}
 
 	@Override

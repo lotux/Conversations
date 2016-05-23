@@ -1,7 +1,5 @@
 package eu.siacs.conversations.ui.adapter;
 
-import android.app.Activity;
-import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -15,25 +13,23 @@ import android.widget.TextView;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 import eu.siacs.conversations.R;
-import eu.siacs.conversations.entities.Account;
-import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.entities.Content;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.ui.XmppActivity;
 
 /**
  * Created by reza on 5/6/16.
  */
-public class ContentAdapter extends ArrayAdapter<Message> {
-    List<Message> messages;
+public class ContentAdapter extends ArrayAdapter<Content> {
+    List<Content> contents;
     XmppActivity activity;
     DisplayMetrics metrics;
-    public ContentAdapter(XmppActivity activity,List<Message> messages){
-        super(activity,0,messages);
-        this.messages = messages;
+    public ContentAdapter(XmppActivity activity,List<Content> contents){
+        super(activity,0,contents);
+        this.contents = contents;
         this.activity = activity;
         metrics =  getContext().getResources().getDisplayMetrics();
     }
@@ -41,7 +37,7 @@ public class ContentAdapter extends ArrayAdapter<Message> {
 
     @Override
     public View getView(int position, View view, ViewGroup parent) {
-        final Message message = getItem(position);
+        final Content content = getItem(position);
         ViewHolder viewHolder = null;
         if (view == null) {
             viewHolder = new ViewHolder();
@@ -53,13 +49,10 @@ public class ContentAdapter extends ArrayAdapter<Message> {
             viewHolder = (ViewHolder) view.getTag();
         }
 
-        if(message.getType() == Message.TYPE_IMAGE){
+        if(content.getType() == Content.TYPE_IMAGE){
 
-            String absolutePath = activity.xmppConnectionService.getFileBackend().getOriginalPath(Uri.parse(message.getRelativeFilePath()));
-            InputStream in;
             try {
-                in = new FileInputStream(absolutePath);
-                Bitmap bitmap = BitmapFactory.decodeStream(in,null,null);
+                Bitmap bitmap = BitmapFactory.decodeFile(content.getRelativeFilePath());
 
                 int width = bitmap.getWidth();
                 int height = bitmap.getHeight();
@@ -76,14 +69,14 @@ public class ContentAdapter extends ArrayAdapter<Message> {
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(scalledW, scalledH);
                 layoutParams.setMargins(0, (int) (metrics.density * 4), 0, (int) (metrics.density * 4));
                 viewHolder.image.setLayoutParams(layoutParams);
-                viewHolder.image.setImageURI(Uri.parse(absolutePath));
+                viewHolder.image.setImageBitmap(bitmap);
                 viewHolder.text.setVisibility(View.GONE);
                 viewHolder.image.setVisibility(View.VISIBLE);
             }catch (Exception e){
               e.printStackTrace();
             }
-        }else if(message.getType() == Message.TYPE_TEXT){
-            viewHolder.text.setText(message.getBody());
+        }else if(content.getType() == Content.TYPE_TEXT){
+            viewHolder.text.setText(content.getBody());
             viewHolder.image.setVisibility(View.GONE);
             viewHolder.text.setVisibility(View.VISIBLE);
         }

@@ -24,5 +24,4 @@
     <item
         android:id="@+id/content_builder"
         android:title="@string/content_builder"/>
-
 </menu>

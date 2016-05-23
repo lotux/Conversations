@@ -6,6 +6,7 @@ import android.database.Cursor;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -18,7 +19,7 @@ import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
-public class Message extends AbstractEntity {
+public class Message extends AbstractEntity implements Serializable {
 
 	public static final String TABLENAME = "messages";
 
@@ -94,9 +95,9 @@ public class Message extends AbstractEntity {
 
 	}
 
-	public Message(String messageUuid, String conversationUuid, String body, int type, String relativeFilePath){
+	public Message(String messageUuid, Conversation conversation, String body, int type, String relativeFilePath){
 		this.uuid = messageUuid;
-		this.conversationUuid = conversationUuid;
+		this.conversation = conversation;
 		this.body = body;
 		this.type = type;
 		this.relativeFilePath = relativeFilePath;
@@ -496,7 +497,9 @@ public class Message extends AbstractEntity {
 						!this.getBody().startsWith(ME_COMMAND) &&
 						!this.bodyIsHeart() &&
 						!message.bodyIsHeart() &&
-						this.isTrusted() == message.isTrusted()
+						this.isTrusted() == message.isTrusted() &&
+						!this.jsonInBody &&
+						!message.jsonInBody
 				);
 	}
 
@@ -864,4 +867,28 @@ public class Message extends AbstractEntity {
     public void setJson(JSONObject json) {
         this.json = json;
     }
+
+	@Override
+	public String toString() {
+		return "Message{" +
+				"body='" + body + '\'' +
+				", conversationUuid='" + conversationUuid + '\'' +
+				", timeSent=" + timeSent +
+				", status=" + status +
+				", type=" + type +
+				", relativeFilePath='" + relativeFilePath + '\'' +
+				", read=" + read +
+				", counterpart=" + counterpart +
+				", trueCounterpart=" + trueCounterpart +
+				", encryptedBody='" + encryptedBody + '\'' +
+				", encryption=" + encryption +
+				", carbon=" + carbon +
+				", oob=" + oob +
+				", edited='" + edited + '\'' +
+				", remoteMsgId='" + remoteMsgId + '\'' +
+				", serverMsgId='" + serverMsgId + '\'' +
+				", conversation=" + conversation +
+				", transferable=" + transferable +
+				'}';
+	}
 }

@@ -19,9 +19,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 
+import eu.siacs.conversations.entities.Content;
+import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.AbstractConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
+import eu.siacs.conversations.ui.UiCallback;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.SSLSocketHelper;
 
@@ -38,12 +41,26 @@ public class HttpConnectionManager extends AbstractConnectionManager {
 		return this.createNewDownloadConnection(message, false);
 	}
 
-	public HttpDownloadConnection createNewDownloadConnection(Message message, boolean interactive) {
+	public HttpDownloadConnection downloadImageContent(Conversation conversation, Content content, UiCallback<Message> uiCallback){
 		HttpDownloadConnection connection = new HttpDownloadConnection(this);
-		connection.init(message,interactive);
+		Message message =  new Message(content.getUuid(),conversation,content.getImageHttpURL(),Message.TYPE_IMAGE,content.getUuid()+ ".jpg");
+		connection.init(message,false,content,uiCallback);
 		this.downloadConnections.add(connection);
 		return connection;
 	}
+
+	public HttpDownloadConnection createNewDownloadConnection(Message message, boolean interactive) {
+		HttpDownloadConnection connection = new HttpDownloadConnection(this);
+		connection.init(message,interactive,null,null);
+		this.downloadConnections.add(connection);
+		return connection;
+	}
+
+	public void uploadAndGetUrl(Message message, UiCallback<Message> callback) {
+		HttpUploadConnection connection = new HttpUploadConnection(this);
+		connection.uploadAndUpdateUi(message,callback);
+	}
+
 
 	public HttpUploadConnection createNewUploadConnection(Message message, boolean delay) {
 		HttpUploadConnection connection = new HttpUploadConnection(this);
@@ -98,4 +115,5 @@ public class HttpConnectionManager extends AbstractConnectionManager {
 	public Proxy getProxy() throws IOException {
 		return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(InetAddress.getLocalHost(), 8118));
 	}
+
 }

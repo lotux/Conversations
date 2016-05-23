@@ -13,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.security.interfaces.DSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,7 @@ import eu.siacs.conversations.xmpp.chatstate.ChatState;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
-public class Conversation extends AbstractEntity implements Blockable {
+public class Conversation extends AbstractEntity implements Blockable,Serializable{
 	public static final String TABLENAME = "conversations";
 
 	public static final int STATUS_AVAILABLE = 0;

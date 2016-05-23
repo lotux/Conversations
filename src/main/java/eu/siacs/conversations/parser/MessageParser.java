@@ -3,14 +3,19 @@ package eu.siacs.conversations.parser;
 import android.util.Log;
 import android.util.Pair;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionStatus;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,7 +27,10 @@ import eu.siacs.conversations.crypto.axolotl.XmppAxolotlMessage;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Bookmark;
 import eu.siacs.conversations.entities.Contact;
+import eu.siacs.conversations.entities.Content;
+import eu.siacs.conversations.entities.ContentsWrapper;
 import eu.siacs.conversations.entities.Conversation;
+import eu.siacs.conversations.entities.JsonContent;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.http.HttpConnectionManager;
@@ -257,6 +265,7 @@ public class MessageParser extends AbstractParser implements
 		final boolean isForwarded;
 		boolean isCarbon = false;
 		String serverMsgId = null;
+		boolean jsonInBody = false;
 		final Element fin = original.findChild("fin", "urn:xmpp:mam:0");
 		if (fin != null) {
 			mXmppConnectionService.getMessageArchiveService().processFin(fin,original.getFrom());
@@ -296,7 +305,7 @@ public class MessageParser extends AbstractParser implements
 		if (timestamp == null) {
 			timestamp = AbstractParser.getTimestamp(packet, System.currentTimeMillis());
 		}
-		final String body = packet.getBody();
+		String body = packet.getBody();
 		final Element mucUserElement = packet.findChild("x", "http://jabber.org/protocol/muc#user");
 		final String pgpEncrypted = packet.findChildContent("x", "jabber:x:encrypted");
 		final Element replaceElement = packet.findChild("replace", "urn:xmpp:message-correct:0");
@@ -316,10 +325,26 @@ public class MessageParser extends AbstractParser implements
 		}
 		//TODO
 		mXmppConnectionService.saveInPreferences(Const.VERIFICATION_CODE,"1234");
-		if(from.equals(Const.REGISTRATION_USER)){
-			Log.d("Verification Code","Message from " + Const.REGISTRATION_USER);
-			handleSentVerificationMessage(packet);
-			return;
+		//////////////////////////handle json contents-////////////////////////
+		Gson gson = new Gson();
+		JsonContent jsonContent=null;
+		try{
+			jsonContent = gson.fromJson(packet.getBody(),JsonContent.class);
+		}catch (Exception e){
+			//e.printStackTrace();
+		}
+
+		if(jsonContent!= null && jsonContent.getType()!= null){
+			if(jsonContent.getType() ==  JsonContent.MESSAGE){
+				Log.d("Json Message","Json Message Received, content:" + packet.getBody());
+				jsonInBody=true;
+				onJsonMessageReceived(packet,jsonContent);
+				body = packet.getBody();
+			}else if(jsonContent.getType() == JsonContent.SMS_CODE){
+				Log.d("Verification Code","Verification Code Received: " + packet.getBody());
+				handleSentVerificationMessage(packet);
+				return;
+			}
 		}
 
 		boolean isTypeGroupChat = packet.getType() == MessagePacket.TYPE_GROUPCHAT;
@@ -510,6 +535,9 @@ public class MessageParser extends AbstractParser implements
 					mXmppConnectionService.getNotificationService().pushFromBacklog(message);
 				}
 			}
+
+			message.setJsonInBody(jsonInBody);
+
 		} else if (!packet.hasChild("body")){ //no body
 			if (isTypeGroupChat) {
 				Conversation conversation = mXmppConnectionService.find(account, from.toBareJid());
@@ -577,6 +605,17 @@ public class MessageParser extends AbstractParser implements
 			Contact contact = account.getRoster().getContact(from);
 			contact.setPresenceName(nick);
 		}
+	}
+
+	private void onJsonMessageReceived(MessagePacket packet, JsonContent jsonContent) {
+		Gson gson = new Gson();
+		Type type = new TypeToken<ArrayList<Content>>(){}.getType();
+		List<Content> contentList = gson.fromJson(jsonContent.getContent(),type);
+		for(int i=0;i<contentList.size();i++){
+			contentList.get(i).setRelativeFilePath(contentList.get(i).getUuid() + ".jpg");
+		}
+		jsonContent.setContent(gson.toJson(contentList));
+		packet.setBody(gson.toJson(jsonContent));
 	}
 
 	private void handleSentVerificationMessage(MessagePacket message) {

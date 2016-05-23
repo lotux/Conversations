@@ -129,7 +129,7 @@ public class EditAccountActivity extends XmppActivity implements OnAccountUpdate
 				xmppConnectionService.updateAccount(mAccount);
 				return;
 			}
-			final boolean registerNewAccount = mRegisterNew.isChecked() && !Config.DISALLOW_REGISTRATION_IN_UI;
+			boolean registerNewAccount = mRegisterNew.isChecked() && !Config.DISALLOW_REGISTRATION_IN_UI;
 			/*if (Config.DOMAIN_LOCK != null && mAccountJid.getText().toString().contains("@")) {
 				mAccountJid.setError(getString(R.string.invalid_username));
 				mAccountJid.requestFocus();
@@ -194,7 +194,7 @@ public class EditAccountActivity extends XmppActivity implements OnAccountUpdate
 				return;
 			}
 			final String password = mAccountJid.getText().toString();
-
+			registerNewAccount = xmppConnectionService.findAccountByJid(jid)  == null;
 			if (mAccount != null) {//update account
 				mAccount.setJid(jid);
 				mAccount.setPort(numericPort);

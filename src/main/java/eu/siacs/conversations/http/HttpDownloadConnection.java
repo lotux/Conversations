@@ -17,6 +17,7 @@ import javax.net.ssl.SSLHandshakeException;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.R;
+import eu.siacs.conversations.entities.Content;
 import eu.siacs.conversations.entities.DownloadableFile;
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.entities.Transferable;
@@ -24,6 +25,7 @@ import eu.siacs.conversations.entities.TransferablePlaceholder;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.AbstractConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
+import eu.siacs.conversations.ui.UiCallback;
 import eu.siacs.conversations.utils.CryptoHelper;
 
 public class HttpDownloadConnection implements Transferable {
@@ -33,6 +35,8 @@ public class HttpDownloadConnection implements Transferable {
 
 	private URL mUrl;
 	private Message message;
+	private Content content;
+	private UiCallback<Message> uiCallback;
 	private DownloadableFile file;
 	private int mStatus = Transferable.STATUS_UNKNOWN;
 	private boolean acceptedAutomatically = false;
@@ -61,11 +65,13 @@ public class HttpDownloadConnection implements Transferable {
 	}
 
 	public void init(Message message) {
-		init(message, false);
+		init(message, false,null,null);
 	}
 
-	public void init(Message message, boolean interactive) {
+	public void init(Message message, boolean interactive, Content content, UiCallback<Message> uiCallback) {
+		this.uiCallback = uiCallback;
 		this.message = message;
+
 		this.message.setTransferable(this);
 		try {
 			if (message.hasFileOnRemoteHost()) {
@@ -133,6 +139,10 @@ public class HttpDownloadConnection implements Transferable {
 		if (acceptedAutomatically) {
 			mXmppConnectionService.getNotificationService().push(message);
 		}
+		if(uiCallback != null){
+			uiCallback.success(this.message);
+		}
+
 	}
 
 	private void changeStatus(int status) {
@@ -313,7 +323,9 @@ public class HttpDownloadConnection implements Transferable {
 		private void updateImageBounds() {
 			message.setType(Message.TYPE_FILE);
 			mXmppConnectionService.getFileBackend().updateFileParams(message, mUrl);
-			mXmppConnectionService.updateMessage(message);
+			if(content == null){
+				mXmppConnectionService.updateMessage(message);
+			}
 		}
 
 	}

@@ -3,7 +3,7 @@ package eu.siacs.conversations.entities;
 import java.util.Arrays;
 import java.util.List;
 
-public interface Transferable {
+public interface Transferable  {
 
 	List<String> VALID_IMAGE_EXTENSIONS = Arrays.asList("webp", "jpeg", "jpg", "png", "jpe");
 	List<String> VALID_CRYPTO_EXTENSIONS = Arrays.asList("pgp", "gpg", "otr");
