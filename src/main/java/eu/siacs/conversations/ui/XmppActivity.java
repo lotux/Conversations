@@ -384,10 +384,12 @@ public abstract class XmppActivity extends Activity {
 		final MenuItem menuSettings = menu.findItem(R.id.action_settings);
 		final MenuItem menuManageAccounts = menu.findItem(R.id.action_accounts);
 		if (menuSettings != null) {
-			menuSettings.setVisible(!Config.LOCK_SETTINGS);
+			//menuSettings.setVisible(!Config.LOCK_SETTINGS);
+			menuSettings.setVisible(false);
 		}
 		if (menuManageAccounts != null) {
-			menuManageAccounts.setVisible(!Config.LOCK_SETTINGS);
+			//menuManageAccounts.setVisible(!Config.LOCK_SETTINGS);
+			menuManageAccounts.setVisible(false);
 		}
 		return super.onCreateOptionsMenu(menu);
 	}

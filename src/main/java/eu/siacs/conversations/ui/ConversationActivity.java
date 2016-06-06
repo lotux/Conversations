@@ -404,36 +404,46 @@ public class ConversationActivity extends XmppActivity
 		final MenuItem menuMute = menu.findItem(R.id.action_mute);
 		final MenuItem menuUnmute = menu.findItem(R.id.action_unmute);
 
+		menuArchive.setVisible(false);
+		menuMucDetails.setVisible(false);
+		menuContactDetails.setVisible(false);
+		menuSecure.setVisible(false);
+		menuInviteContact.setVisible(false);
+		menuClearHistory.setVisible(false);
+		menuAdd.setVisible(false);
 		if (isConversationsOverviewVisable() && isConversationsOverviewHideable()) {
-			menuArchive.setVisible(false);
-			menuMucDetails.setVisible(false);
-			menuContactDetails.setVisible(false);
-			menuSecure.setVisible(false);
-			menuInviteContact.setVisible(false);
+			//menuArchive.setVisible(false);
+			//menuMucDetails.setVisible(false);
+			//menuContactDetails.setVisible(false);
+			//menuSecure.setVisible(false);
+			//menuInviteContact.setVisible(false);
 			menuAttach.setVisible(false);
-			menuClearHistory.setVisible(false);
+			//menuClearHistory.setVisible(false);
 			menuMute.setVisible(false);
 			menuUnmute.setVisible(false);
 		} else {
-			menuAdd.setVisible(!isConversationsOverviewHideable());
+			//menuAdd.setVisible(!isConversationsOverviewHideable());
 			if (this.getSelectedConversation() != null) {
-				if (this.getSelectedConversation().getNextEncryption() != Message.ENCRYPTION_NONE) {
+				/*if (this.getSelectedConversation().getNextEncryption() != Message.ENCRYPTION_NONE) {
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 						menuSecure.setIcon(R.drawable.ic_lock_white_24dp);
 					} else {
 						menuSecure.setIcon(R.drawable.ic_action_secure);
 					}
-				}
+				}*/
 				if (this.getSelectedConversation().getMode() == Conversation.MODE_MULTI) {
-					menuContactDetails.setVisible(false);
+					//menuContactDetails.setVisible(false);
 					menuAttach.setVisible(getSelectedConversation().getAccount().httpUploadAvailable() && getSelectedConversation().getMucOptions().participating());
-					menuInviteContact.setVisible(getSelectedConversation().getMucOptions().canInvite());
-					menuSecure.setVisible((Config.supportOpenPgp() || Config.supportOmemo()) && Config.multipleEncryptionChoices()); //only if pgp is supported we have a choice
+					//menuInviteContact.setVisible(getSelectedConversation().getMucOptions().canInvite());
+					//menuSecure.setVisible((Config.supportOpenPgp() || Config.supportOmemo()) && Config.multipleEncryptionChoices()); //only if pgp is supported we have a choice
 				} else {
+/*
 					menuContactDetails.setVisible(!this.getSelectedConversation().withSelf());
 					menuMucDetails.setVisible(false);
 					menuSecure.setVisible(Config.multipleEncryptionChoices());
+*/
 				}
+
 				if (this.getSelectedConversation().isMuted()) {
 					menuMute.setVisible(false);
 				} else {
@@ -747,12 +757,19 @@ public class ConversationActivity extends XmppActivity
 		}
 		PopupMenu attachFilePopup = new PopupMenu(this, menuAttachFile);
 		attachFilePopup.inflate(R.menu.attachment_choices);
+/*
 		if (new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION).resolveActivity(getPackageManager()) == null) {
 			attachFilePopup.getMenu().findItem(R.id.attach_record_voice).setVisible(false);
 		}
 		if (new Intent("eu.siacs.conversations.location.request").resolveActivity(getPackageManager()) == null) {
 			attachFilePopup.getMenu().findItem(R.id.attach_location).setVisible(false);
 		}
+*/
+		attachFilePopup.getMenu().findItem(R.id.attach_choose_file).setVisible(false);
+		attachFilePopup.getMenu().findItem(R.id.attach_choose_picture).setVisible(false);
+		attachFilePopup.getMenu().findItem(R.id.attach_location).setVisible(false);
+		attachFilePopup.getMenu().findItem(R.id.attach_record_voice).setVisible(false);
+		attachFilePopup.getMenu().findItem(R.id.attach_take_picture).setVisible(false);
 		attachFilePopup.setOnMenuItemClickListener(new OnMenuItemClickListener() {
 
 			@Override
