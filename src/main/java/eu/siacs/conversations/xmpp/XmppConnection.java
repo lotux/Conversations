@@ -185,6 +185,7 @@ public class XmppConnection implements Runnable {
 							false);
 					forceCloseSocket();
 					changeStatus(Account.State.REGISTRATION_SUCCESSFUL);
+
 				} else if (packet.hasChild("error")
 						&& (packet.findChild("error")
 						.hasChild("conflict"))) {
@@ -354,6 +355,8 @@ public class XmppConnection implements Runnable {
 			this.changeStatus(Account.State.UNAUTHORIZED);
 		} catch (final UnknownHostException | ConnectException e) {
 			this.changeStatus(Account.State.SERVER_NOT_FOUND);
+			mXmppConnectionService.getAccounts().clear();
+			System.out.println(mXmppConnectionService.getAccounts().size());
 		} catch (final SocksSocketFactory.SocksProxyNotFoundException e) {
 			this.changeStatus(Account.State.TOR_NOT_AVAILABLE);
 		} catch (final IOException | XmlPullParserException | NoSuchAlgorithmException e) {
@@ -881,6 +884,7 @@ public class XmppConnection implements Runnable {
 	private void setAccountCreationFailed(String instructions) {
 		changeStatus(Account.State.REGISTRATION_FAILED);
 		disconnect(true);
+		mXmppConnectionService.getAccounts().clear();
 		Log.d(Config.LOGTAG, account.getJid().toBareJid()
 				+ ": could not register. instructions are"
 				+ instructions);

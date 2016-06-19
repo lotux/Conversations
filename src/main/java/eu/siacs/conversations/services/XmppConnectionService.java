@@ -65,6 +65,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import de.duenndns.ssl.MemorizingTrustManager;
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.Const;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.crypto.PgpEngine;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
@@ -331,7 +332,10 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 					scheduleWakeUpCall(timeToReconnect, account.getUuid().hashCode());
 				}
 			} else if (account.getStatus() == Account.State.REGISTRATION_SUCCESSFUL) {
-				databaseBackend.updateAccount(account);
+				saveInPreferences(Const.VERIFICATION_CODE_DONE,"0");
+				accounts.add(account);
+				//databaseBackend.updateAccount(account);
+				databaseBackend.createAccount(account);
 				reconnectAccount(account, true, false);
 			} else if ((account.getStatus() != Account.State.CONNECTING)
 					&& (account.getStatus() != Account.State.NO_INTERNET)) {
@@ -1442,8 +1446,8 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 
 	public void createAccount(final Account account) {
 		account.initAccountServices(this);
-		databaseBackend.createAccount(account);
-		this.accounts.add(account);
+		//databaseBackend.createAccount(account);
+		//this.accounts.add(account);
 		this.reconnectAccountInBackground(account);
 		updateAccountUi();
 	}
@@ -1462,6 +1466,8 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 						account.setDisplayName(info.second);
 						createAccount(account);
 						callback.onAccountCreated(account);
+						databaseBackend.createAccount(account);
+						XmppConnectionService.this.accounts.add(account);
 						if (Config.X509_VERIFICATION) {
 							try {
 								getMemorizingTrustManager().getNonInteractive().checkClientTrusted(chain, "RSA");

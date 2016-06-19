@@ -187,6 +187,7 @@ public class ConversationActivity extends XmppActivity
 			}
 		}else{
 			Intent intent = getIntent();
+			//if intent.getExtras() != null  means forwarded from content builder
 			if(intent.getExtras() != null){
 				mOpenConverstaion = intent.getExtras().getString(STATE_OPEN_CONVERSATION, null);
 				mPanelOpen = intent.getExtras().getBoolean(STATE_PANEL_OPEN, true);
@@ -1262,8 +1263,8 @@ public class ConversationActivity extends XmppActivity
 	void onBackendConnected() {
 		this.xmppConnectionService.getNotificationService().setIsInForeground(true);
 		String isVerifiedSmsCode = xmppConnectionService.fetchFromPreferences(Const.VERIFICATION_CODE_DONE);
-		updateConversationList();
 
+		updateConversationList();
 		if (mPendingConferenceInvite != null) {
 			mPendingConferenceInvite.execute(this);
 			mPendingConferenceInvite = null;
@@ -1280,7 +1281,7 @@ public class ConversationActivity extends XmppActivity
 				}
 				finish();
 			}
-		} else if (isVerifiedSmsCode == null || (xmppConnectionService.getAccounts().size() > 0 && !isVerifiedSmsCode.equals("1"))) {//is verfied sms code ?
+		} else if ( isVerifiedSmsCode != null &&  !isVerifiedSmsCode.equals("1") && xmppConnectionService.getAccounts().size() > 0 ) {//is verfied sms code ?
 			Intent intent = new Intent(getApplicationContext(), VerificationCodeActivity.class);
 			startActivity(intent);
 			finish();

@@ -161,28 +161,6 @@ public class EditAccountActivity extends XmppActivity implements OnAccountUpdate
 			}
 			String hostname = null;
 			int numericPort = 5222;
-			if (mShowOptions) {
-				hostname = mHostname.getText().toString();
-				final String port = mPort.getText().toString();
-				if (hostname.contains(" ")) {
-					mHostname.setError(getString(R.string.not_valid_hostname));
-					mHostname.requestFocus();
-					return;
-				}
-				try {
-					numericPort = Integer.parseInt(port);
-					if (numericPort < 0 || numericPort > 65535) {
-						mPort.setError(getString(R.string.not_a_valid_port));
-						mPort.requestFocus();
-						return;
-					}
-
-				} catch (NumberFormatException e) {
-					mPort.setError(getString(R.string.not_a_valid_port));
-					mPort.requestFocus();
-					return;
-				}
-			}
 
 			if (jid.isDomainJid()) {
 				if (Config.DOMAIN_LOCK != null) {
@@ -217,12 +195,12 @@ public class EditAccountActivity extends XmppActivity implements OnAccountUpdate
 					mAccount.setOption(Account.OPTION_USETLS, true);
 					mAccount.setOption(Account.OPTION_USECOMPRESSION, true);
 					mAccount.setOption(Account.OPTION_REGISTER, registerNewAccount);
-					xmppConnectionService.createAccount(mAccount);
+					xmppConnectionService.createAccount(mAccount); //create new account
 				}
 				updateSaveButton();
 				//send to verification page
-
 				updateAccountInformation(true);
+
 			}
 
 		}

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.Const;
 import eu.siacs.conversations.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.services.XmppConnectionService;
@@ -375,6 +376,7 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
 
 	@Override
 	public void onAccountCreated(Account account) {
+		xmppConnectionService.saveInPreferences(Const.VERIFICATION_CODE,"0");
 		switchToAccount(account, true);
 	}
 
