@@ -198,7 +198,6 @@ public class EditAccountActivity extends XmppActivity implements OnAccountUpdate
 					xmppConnectionService.createAccount(mAccount); //create new account
 				}
 				updateSaveButton();
-				//send to verification page
 				updateAccountInformation(true);
 
 			}
@@ -635,11 +634,13 @@ public class EditAccountActivity extends XmppActivity implements OnAccountUpdate
 	private void updateAccountInformation(boolean init) {
 		if (init) {
 			this.mAccountJid.getEditableText().clear();
-			if (Config.DOMAIN_LOCK != null) {
+			/*if (Config.DOMAIN_LOCK != null) {*/
 				this.mAccountJid.getEditableText().append(this.mAccount.getJid().getLocalpart());
-			} else {
-				this.mAccountJid.getEditableText().append(this.mAccount.getJid().toBareJid().toString());
+			/*} else {*/
+/*
+				this.mAccountJid.getEditableText().append(this.mAccount.getJid().getLocalpart());
 			}
+*/
 			this.mPassword.setText(this.mAccount.getPassword());
 			this.mHostname.setText("");
 			this.mHostname.getEditableText().append(this.mAccount.getHostname());
