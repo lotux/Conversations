@@ -635,4 +635,5 @@
 	<string name="verification_code_is_not_valid">Sms Code is Not Valid</string>
 	<string name="content_builder">Content Builder</string>
 	<string name="add_image">Add Image</string>
+	<string name="action_sync_contacts">Sync Contacts</string>
 </resources>

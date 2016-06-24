@@ -5,15 +5,19 @@ import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.ClipData;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.widget.SlidingPaneLayout;
@@ -645,6 +649,12 @@ public class ConversationActivity extends XmppActivity
 
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
+		//TODO temprory action button
+		if(item.getItemId() == R.id.action_sync_contacts){
+			syncPhonebook();
+			return true;
+		}
+
 		if (item.getItemId() == android.R.id.home) {
 			showConversationsOverview();
 			return true;
@@ -697,6 +707,111 @@ public class ConversationActivity extends XmppActivity
 		} else {
 			return super.onOptionsItemSelected(item);
 		}
+	}
+
+	private void syncPhonebook() {
+		//Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				final ContentResolver cr = ConversationActivity.this.getContentResolver();
+				final Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+				if (cur.getCount() > 0) {
+
+
+					final int mx = cur.getCount();
+
+					while (cur.moveToNext()) {
+						String id = cur.getString(cur.getColumnIndex(
+								ContactsContract.Contacts._ID));
+						String name = cur.getString(cur.getColumnIndex(
+								ContactsContract.Contacts.DISPLAY_NAME));
+						if (Integer.parseInt(cur.getString(cur.getColumnIndex(
+								ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+							Cursor pCur = cr.query(
+									ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+									null,
+									ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+									new String[]{id}, null);
+
+							while (pCur.moveToNext()) {
+								int phoneType = pCur.getInt(pCur.getColumnIndex(
+										ContactsContract.CommonDataKinds.Phone.TYPE));
+								String phoneNumber = pCur.getString(pCur.getColumnIndex(
+										ContactsContract.CommonDataKinds.Phone.NUMBER));
+								switch (phoneType) {
+									case ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE:
+										final String orig = phoneNumber;
+										phoneNumber = phoneNumber.replaceAll("[^\\d.]", "");
+										Log.e(name + "(mobile number)", phoneNumber);
+
+
+										int phonelen = phoneNumber.length();
+										if (phoneNumber.charAt(0) == '0' && phoneNumber.charAt(1) == '7') {
+											phoneNumber = phoneNumber.replaceFirst("0", "+\\254");
+											System.out.println("replaced: " + phoneNumber);
+										} else if (orig.charAt(0) == '+') {
+											phoneNumber = '+' + phoneNumber;
+										}
+										System.out.println("Name:" + name + " number:" + phoneNumber);
+										final String domain = "@" + Config.MAGIC_CREATE_DOMAIN;
+										final Jid accountJid;
+										if (phoneNumber.length() > 10) {
+											try {
+												accountJid = Jid.fromString(phoneNumber + domain);
+												Account account = xmppConnectionService.getAccounts().get(0);
+
+												try {
+													Thread.sleep(1);
+
+													if (xmppConnectionService.findAccountByJid(accountJid) == null) {
+														System.out.println("not skipping...");
+														//Account account = getAccount().getOtrService().getFingerprint();
+														final Contact contact = account.getRoster().getContact(accountJid);
+														if (contact.showInRoster()) {
+															contact.setCommonName(name);
+															contact.setPresenceName(name);
+															//throw new EnterJidDialog.JidError(getString(R.string.contact_already_exists));
+														} else {
+															//Account acc = xmppConnectionService.findAccountByJid(accountJid);
+															//if (acc != null) {
+
+															contact.addOtrFingerprint(account.getOtrFingerprint());
+															contact.setCommonName(name);
+															contact.setPresenceName(name);
+
+															xmppConnectionService.createContact(contact);
+															//switchToConversation(contact);
+															//return true;
+															//}
+														}
+													} else {
+														System.out.println("skipping...." + phoneNumber);
+													}
+												} catch (InterruptedException e) {
+													e.printStackTrace();
+												}
+
+											} catch (InvalidJidException e) {
+												e.printStackTrace();
+											}
+										}
+										break;
+
+								}
+
+
+							}
+							pCur.close();
+						}
+					}
+				}
+
+			}
+		};
+		Thread thread = new Thread(runnable);
+		thread.run();
+
 	}
 
 	public void endConversation(Conversation conversation) {
@@ -1274,8 +1389,6 @@ public class ConversationActivity extends XmppActivity
 			if (mRedirected.compareAndSet(false, true)) {
 				if (Config.X509_VERIFICATION) {
 					startActivity(new Intent(this, ManageAccountActivity.class));
-				} else if (Config.MAGIC_CREATE_DOMAIN != null) {
-					startActivity(new Intent(this, WelcomeActivity.class));
 				} else {
 					startActivity(new Intent(this, EditAccountActivity.class));
 				}
