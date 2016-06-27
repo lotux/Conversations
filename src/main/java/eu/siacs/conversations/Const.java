@@ -10,4 +10,5 @@ public class Const {
     public static final String VERIFICATION_CODE="verificationCode";
     public static final String REGISTRATION_USER = "registeration@" + Config.DOMAIN_NAME;
     public static final String CONTENT_BUILDER = "Content Builder";
+    public static final String DEFAULT_COUNTRY_CODE = "defaultCountryCode";
 }

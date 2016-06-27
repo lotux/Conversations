@@ -35,6 +35,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import net.java.otr4j.OtrException;
+import net.java.otr4j.crypto.Util;
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionImpl;
@@ -333,6 +334,7 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 				}
 			} else if (account.getStatus() == Account.State.REGISTRATION_SUCCESSFUL) {
 				saveInPreferences(Const.VERIFICATION_CODE_DONE,"0");
+				setCountryCodeInPreferences(account.getJid().getLocalpart());
 				accounts.add(account);
 				//databaseBackend.updateAccount(account);
 				databaseBackend.createAccount(account);
@@ -351,6 +353,12 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 			getNotificationService().updateErrorNotification();
 		}
 	};
+
+	private void setCountryCodeInPreferences(String mobilenumber) {
+		String countryCode  = mobilenumber.substring(0,2);
+		saveInPreferences(Const.DEFAULT_COUNTRY_CODE,countryCode);
+	}
+
 	private OpenPgpServiceConnection pgpServiceConnection;
 	private PgpEngine mPgpEngine = null;
 	private WakeLock wakeLock;

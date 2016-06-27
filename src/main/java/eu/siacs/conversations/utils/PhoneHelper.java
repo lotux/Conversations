@@ -13,6 +13,10 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Profile;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
+
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -131,6 +135,16 @@ public class PhoneHelper {
 			}
 		} else {
 			return "unknown";
+		}
+	}
+
+	public static boolean isValidMobileNumber(String mobileNumber,String countryIsoCode) {
+		PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
+		try{
+			Phonenumber.PhoneNumber phonenumber = phoneNumberUtil.parse(mobileNumber,countryIsoCode);
+			return phoneNumberUtil.isValidNumber(phonenumber);
+		}catch (NumberParseException e){
+			return false;
 		}
 	}
 }
