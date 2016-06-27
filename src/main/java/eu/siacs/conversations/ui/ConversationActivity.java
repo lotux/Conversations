@@ -789,6 +789,7 @@ public class ConversationActivity extends XmppActivity
                                                     contact.setPresenceName(name);
 
                                                     xmppConnectionService.createContact(contact);
+                                                    xmppConnectionService.findOrCreateConversation(account,accountJid,false);
                                                     //switchToConversation(contact);
                                                     //return true;
                                                     //}
