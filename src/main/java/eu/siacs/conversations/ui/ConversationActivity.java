@@ -765,35 +765,24 @@ public class ConversationActivity extends XmppActivity
                                // Log.e("Is Valid Mobile Num", String.valueOf(isValidNumber));
 
                                 //if (isValidNumber) {
-                                    final Jid accountJid;
+                                    final Jid contactJid;
                                     try {
-                                        accountJid = Jid.fromString(phoneNumber + domain);
+                                        contactJid = Jid.fromString(phoneNumber + domain);
                                         Account account = xmppConnectionService.getAccounts().get(0);
 
                                         //try {
                                             //Thread.sleep(1);
 
-                                            if (xmppConnectionService.findAccountByJid(accountJid) == null) {
+                                            if (xmppConnectionService.findAccountByJid(contactJid) == null) {
                                                 //Account account = getAccount().getOtrService().getFingerprint();
-                                                final Contact contact = account.getRoster().getContact(accountJid);
-                                                if (contact.showInRoster()) {
-                                                    contact.setCommonName(name);
-                                                    contact.setPresenceName(name);
-                                                    //throw new EnterJidDialog.JidError(getString(R.string.contact_already_exists));
-                                                } else {
-                                                    //Account acc = xmppConnectionService.findAccountByJid(accountJid);
-                                                    //if (acc != null) {
-
+                                                final Contact contact = account.getRoster().getContact(contactJid);
                                                     contact.addOtrFingerprint(account.getOtrFingerprint());
                                                     contact.setCommonName(name);
                                                     contact.setPresenceName(name);
-
+                                                    contact.setOption(Contact.Options.IN_ROSTER);
                                                     xmppConnectionService.createContact(contact);
-                                                    xmppConnectionService.findOrCreateConversation(account,accountJid,false);
-                                                    //switchToConversation(contact);
-                                                    //return true;
-                                                    //}
-                                                }
+                                                    xmppConnectionService.findOrCreateConversation(account,contactJid,false);
+
                                             } else {
                                                 System.out.println("skipping...." + phoneNumber);
                                             }
@@ -818,7 +807,9 @@ public class ConversationActivity extends XmppActivity
 
                     }
                 }
+                cur.close();
 
+                xmppConnectionService.databaseBackend.writeRoster(xmppConnectionService.getAccounts().get(0).getRoster());
             }
         };
         Thread thread = new Thread(runnable);

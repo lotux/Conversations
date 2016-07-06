@@ -730,8 +730,8 @@ public class XmppConnectionService extends Service implements OnPhoneContactsLoa
 
 		this.databaseBackend = DatabaseBackend.getInstance(getApplicationContext());
 		this.accounts = databaseBackend.getAccounts();
-
-		restoreFromDatabase();
+//TODO
+		//restoreFromDatabase();
 
 		getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, contactObserver);
 		this.fileObserver.startWatching();

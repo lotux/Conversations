@@ -56,7 +56,8 @@ public class Conversation extends AbstractEntity implements Blockable,Serializab
 	private String name;
 	private String contactUuid;
 	private String accountUuid;
-	private Jid contactJid;
+	private Jid
+			contactJid;
 	private int status;
 	private long created;
 	private int mode;
@@ -429,7 +430,8 @@ public class Conversation extends AbstractEntity implements Blockable,Serializab
 				}
 			}
 		} else {
-			return this.getContact().getDisplayName();
+			Contact con = this.getContact();
+			return con.getDisplayName();
 		}
 	}
 

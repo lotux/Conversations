@@ -615,6 +615,8 @@ public class DatabaseBackend extends SQLiteOpenHelper {
 		Cursor cursor;
 		String args[] = {roster.getAccount().getUuid()};
 		cursor = db.query(Contact.TABLENAME, null, Contact.ACCOUNT + "=?", args, null, null, null);
+		Log.d("Read Roster","Roster Count From Db:" + cursor.getCount());
+		cursor.moveToFirst();
 		while (cursor.moveToNext()) {
 			roster.initContact(Contact.fromCursor(cursor));
 		}
